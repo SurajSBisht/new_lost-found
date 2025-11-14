@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - Lost and Found</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Lost & Found System</h1>
+        <div class="nav-links">
+            <span>Welcome, {{ current_user.full_name }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ lost_items|length }}</h3>
+                <p>My Lost Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ found_items|length }}</h3>
+                <p>My Found Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ notifications|selectattr('is_read', 'equalto', False)|list|length }}</h3>
+                <p>New Notifications</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('report')">Report Items</button>
+            <button class="tab" onclick="showTab('my-items')">My Items</button>
+            <button class="tab" onclick="showTab('notifications')">Notifications</button>
+        </div>
+
+        <div id="report-tab" class="tab-content active">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                <div class="card">
+                    <h2>Report Lost Item</h2>
+                    <form method="POST" action="{{ url_for('report_lost') }}">
+                        <div class="form-group">
+                            <label for="lost_item_name">Item Name</label>
+                            <input type="text" id="lost_item_name" name="item_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lost_category">Category</label>
+                            <select id="lost_category" name="category" required>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Documents">Documents</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Keys">Keys</option>
+                                <option value="Wallet">Wallet</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lost_description">Description</label>
+                            <textarea id="lost_description" name="description" required placeholder="Provide detailed description..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lost_location">Location Lost</label>
+                            <input type="text" id="lost_location" name="location_lost" required placeholder="e.g., Library 2nd Floor">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="lost_date">Date Lost</label>
+                            <input type="date" id="lost_date" name="date_lost" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Lost Item</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Report Found Item</h2>
+                    <form method="POST" action="{{ url_for('report_found') }}">
+                        <div class="form-group">
+                            <label for="found_item_name">Item Name</label>
+                            <input type="text" id="found_item_name" name="item_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="found_category">Category</label>
+                            <select id="found_category" name="category" required>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Documents">Documents</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Keys">Keys</option>
+                                <option value="Wallet">Wallet</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="found_description">Description</label>
+                            <textarea id="found_description" name="description" required placeholder="Provide detailed description..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="found_location">Location Found</label>
+                            <input type="text" id="found_location" name="location_found" required placeholder="e.g., Cafeteria">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="found_date">Date Found</label>
+                            <input type="date" id="found_date" name="date_found" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-secondary" style="width: 100%;">Submit Found Item</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="my-items-tab" class="tab-content">
+            <div class="card">
+                <h2>My Lost Items</h2>
+                <div class="table-container">
+                    {% if lost_items %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Date Lost</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in lost_items %}
+                                <tr>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.location_lost }}</td>
+                                    <td>{{ item.date_lost }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if item.status == 'unfound' %}warning{% elif item.status == 'found' %}success{% else %}info{% endif %}">
+                                            {{ item.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>You haven't reported any lost items yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>My Found Items</h2>
+                <div class="table-container">
+                    {% if found_items %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Date Found</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in found_items %}
+                                <tr>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.location_found }}</td>
+                                    <td>{{ item.date_found }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if item.status == 'unclaimed' %}warning{% elif item.status == 'returned' %}success{% else %}info{% endif %}">
+                                            {{ item.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>You haven't reported any found items yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="notifications-tab" class="tab-content">
+            <div class="card">
+                <h2>Notifications</h2>
+                {% if notifications %}
+                    <a href="{{ url_for('mark_all_read') }}" class="btn btn-sm btn-secondary" style="margin-bottom: 1rem;">Mark All as Read</a>
+                    {% for notification in notifications %}
+                        <div class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                            <div class="notification-message">
+                                <p>{{ notification.message }}</p>
+                                <p class="notification-time">{{ notification.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                            {% if not notification.is_read %}
+                                <a href="{{ url_for('mark_notification_read', notification_id=notification.notification_id) }}" class="btn btn-sm btn-primary">Mark Read</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <p>No notifications yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

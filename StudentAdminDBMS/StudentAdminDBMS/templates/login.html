@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Lost and Found System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2>Lost & Found System</h2>
+            <p style="text-align: center; color: #6b7280; margin-bottom: 2rem;">Sign in to your account</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 1rem;">Sign In</button>
+            </form>
+            
+            <p style="text-align: center; color: #6b7280;">
+                Don't have an account? <a href="{{ url_for('register') }}" style="color: #4f46e5; text-decoration: none; font-weight: 500;">Register here</a>
+            </p>
+            
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+                <p style="text-align: center; color: #9ca3af; font-size: 0.9rem; margin-bottom: 0.5rem;">Demo Accounts:</p>
+                <p style="text-align: center; font-size: 0.85rem; color: #6b7280;">
+                    <strong>Admin:</strong> admin / admin123<br>
+                    <strong>Student:</strong> john_doe / student123
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

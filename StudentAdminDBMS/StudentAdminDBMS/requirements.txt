@@ -1,0 +1,10 @@
+Flask==3.0.0
+psycopg2-binary==2.9.9
+Flask-Login==0.6.3
+python-dotenv==1.0.0
+Werkzeug==3.0.1
+Flask
+Flask-Login
+psycopg2-binary
+python-dotenv
+Werkzeug
