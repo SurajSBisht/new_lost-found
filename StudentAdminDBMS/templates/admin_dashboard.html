@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Lost and Found</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>Lost & Found System - Admin Panel</h1>
+        <div class="nav-links">
+            <span>Admin: {{ current_user.full_name }}</span>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>{{ stats.total_lost }}</h3>
+                <p>Total Lost Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.unfound_lost }}</h3>
+                <p>Unfound Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.total_found }}</h3>
+                <p>Total Found Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.unclaimed_found }}</h3>
+                <p>Unclaimed Items</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.verified_matches }}</h3>
+                <p>Verified Matches</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ stats.total_students }}</h3>
+                <p>Total Students</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('lost-items')">Lost Items</button>
+            <button class="tab" onclick="showTab('found-items')">Found Items</button>
+            <button class="tab" onclick="showTab('users')">Users</button>
+        </div>
+
+        <div id="lost-items-tab" class="tab-content active">
+            <div class="card">
+                <h2>All Lost Items</h2>
+                <div class="table-container">
+                    {% if lost_items %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Reporter</th>
+                                    <th>Contact</th>
+                                    <th>Location</th>
+                                    <th>Date Lost</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in lost_items %}
+                                <tr>
+                                    <td>{{ item.lost_id }}</td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.description[:50] }}...</td>
+                                    <td>{{ item.full_name }}</td>
+                                    <td>{{ item.phone }}<br>{{ item.email }}</td>
+                                    <td>{{ item.location_lost }}</td>
+                                    <td>{{ item.date_lost }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if item.status == 'unfound' %}warning{% elif item.status == 'found' %}success{% else %}info{% endif %}">
+                                            {{ item.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('update_lost_status') }}" style="display: inline;">
+                                            <input type="hidden" name="lost_id" value="{{ item.lost_id }}">
+                                            <select name="status" onchange="this.form.submit()" class="btn btn-sm" style="padding: 0.3rem;">
+                                                <option value="unfound" {% if item.status == 'unfound' %}selected{% endif %}>Unfound</option>
+                                                <option value="found" {% if item.status == 'found' %}selected{% endif %}>Found</option>
+                                                <option value="resolved" {% if item.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No lost items reported yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="found-items-tab" class="tab-content">
+            <div class="card">
+                <h2>All Found Items</h2>
+                <div class="table-container">
+                    {% if found_items %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Reporter</th>
+                                    <th>Contact</th>
+                                    <th>Location</th>
+                                    <th>Date Found</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in found_items %}
+                                <tr>
+                                    <td>{{ item.found_id }}</td>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.category }}</td>
+                                    <td>{{ item.description[:50] }}...</td>
+                                    <td>{{ item.full_name }}</td>
+                                    <td>{{ item.phone }}<br>{{ item.email }}</td>
+                                    <td>{{ item.location_found }}</td>
+                                    <td>{{ item.date_found }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if item.status == 'unclaimed' %}warning{% elif item.status == 'returned' %}success{% else %}info{% endif %}">
+                                            {{ item.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('update_found_status') }}" style="display: inline;">
+                                            <input type="hidden" name="found_id" value="{{ item.found_id }}">
+                                            <select name="status" onchange="this.form.submit()" class="btn btn-sm" style="padding: 0.3rem;">
+                                                <option value="unclaimed" {% if item.status == 'unclaimed' %}selected{% endif %}>Unclaimed</option>
+                                                <option value="returned" {% if item.status == 'returned' %}selected{% endif %}>Returned</option>
+                                                <option value="resolved" {% if item.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No found items reported yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div id="users-tab" class="tab-content">
+            <div class="card">
+                <h2>Registered Users</h2>
+                <div class="table-container">
+                    {% if users %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Registered</th>
+                                    <th>Last Login</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.user_id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if user.role == 'admin' %}danger{% else %}info{% endif %}">
+                                            {{ user.role }}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>No users registered yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
